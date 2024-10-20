@@ -1,0 +1,59 @@
+#!/bin/bash
+# Define log file
+LOGFILE="/var/log/system_health.log"
+
+# Function to log messages
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOGFILE"
+}
+
+# Check CPU usage
+check_cpu() {
+    CPU_LOAD=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}')
+    if (( $(echo "$CPU_LOAD > 90" | bc -l) )); then
+        log_message "CRITICAL: CPU Load is high at ${CPU_LOAD}%"
+    else
+        log_message "CPU Load is normal at ${CPU_LOAD}%"
+    fi
+}
+
+# Check memory usage
+check_memory() {
+    MEM_FREE=$(free | grep Mem | awk '{print $4/$2 * 100.0}')
+    if (( $(echo "$MEM_FREE < 10" | bc -l) )); then
+        log_message "CRITICAL: Memory usage is high, free memory is ${MEM_FREE}%"
+    else
+        log_message "Memory usage is normal, free memory is ${MEM_FREE}%"
+    fi
+}
+
+# Check disk space usage
+check_disk() {
+    DISK_USAGE=$(df / | grep / | awk '{ print $5 }' | sed 's/%//g')
+    if [ "$DISK_USAGE" -gt 90 ]; then
+        log_message "CRITICAL: Disk usage is high at ${DISK_USAGE}%"
+    else
+        log_message "Disk usage is normal at ${DISK_USAGE}%"
+    fi
+}
+
+# Check network connectivity
+check_network() {
+    if ping -c 1 google.com &> /dev/null; then
+        log_message "Network is up"
+    else
+        log_message "CRITICAL: Network is down"
+    fi
+}
+
+# Main function to execute checks
+main() {
+    > "$LOGFILE" # Clear the log file at the start
+    check_cpu
+    check_memory
+    check_disk
+    check_network
+}
+
+# Execute the main function
+main
