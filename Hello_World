@@ -4,8 +4,8 @@
 # -------------------------------------------------
 # Define bash shell variable called var 
 # Avoid spaces around the assignment operator (=)
-var="Hello World"
+test="Hello World"
 # print it 
-echo "$var"
+echo "$test"
 # Another way of printing it
-printf "%s\n" "$var"
+printf "%s\n" "$test"
